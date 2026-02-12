@@ -1,4 +1,4 @@
-# calculator.py
+# calculator/pkg/calculator.py
 
 class Calculator:
     def __init__(self):
