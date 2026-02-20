@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 import google.genai as genai
 from google.genai import types
 import sys
+from prompts import system_prompt
+from available_functions import available_functions
 
 
 def main():
@@ -23,16 +25,27 @@ def main():
     client = genai.Client(api_key=api_key)
 
     # Generate content with the client
-    model = "gemini-2.5-flash"
+    model = "gemini-2.5-flash-lite"
 
     try:
-        response = client.models.generate_content(model=model, contents=messages)
+        response = client.models.generate_content(
+            model=model,
+            contents=messages,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt, tools=[available_functions]
+            ),
+        )
         if len(sys.argv) > 2 and sys.argv[2] == "--verbose":
             print(f"User prompt: {user_prompt}")
             print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
             print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
-        print("Response:")
-        print(response.text)
+
+        if response.function_calls:
+            for function_call in response.function_calls:
+                print(f"Calling function: {function_call.name}({function_call.args})")
+        else:
+            print("Response:")
+            print(response.text)
     except Exception as e:
         print(f"Failed model call on model: {model} with error {e}")
 
