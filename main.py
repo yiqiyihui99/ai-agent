@@ -1,23 +1,25 @@
 import os
+import argparse
 from dotenv import load_dotenv
 import google.genai as genai
 from google.genai import types
-import sys
 from prompts import system_prompt
 from available_functions import available_functions
-import argparse
+from functions.call_function import call_function
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1].strip() == "":
-        print(
-            'Missing Value: Input prompt is required. \n Usage: python3 main.py "your prompt here" [--verbose]'
-        )
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="AI Code Assistant CLI")
+    parser.add_argument(
+        "user_prompt", nargs="+", help="The input prompt for gemini agent"
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
+    args = parser.parse_args()
 
-    user_prompt = " ".join(
-        sys.argv[1:]
-    )  # Potentially modify to handle nonquated prompt + flag
+    user_prompt = " ".join(args.user_prompt)
+    verbose = args.verbose
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
@@ -29,6 +31,10 @@ def main():
         raise ValueError("GEMINI_API_KEY is not set")
     client = genai.Client(api_key=api_key)
 
+    return generate_content(client, user_prompt, messages, verbose)
+
+
+def generate_content(client, user_prompt, messages, verbose):
     # Generate content with the client
     model = "gemini-2.5-flash"
 
@@ -40,7 +46,7 @@ def main():
                 system_instruction=system_prompt, tools=[available_functions]
             ),
         )
-        if len(sys.argv) > 2 and (sys.argv[2] == "--verbose" or sys.argv[2] == "-v"):
+        if verbose:
             print(f"User prompt: {user_prompt}")
             print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
             print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
@@ -48,6 +54,20 @@ def main():
         if response.function_calls:
             for function_call in response.function_calls:
                 print(f"Calling function: {function_call.name}({function_call.args})")
+                function_call_result = call_function(function_call, verbose=verbose)
+                if not function_call_result.parts:
+                    raise Exception("Function call result is empty")
+                first_item = function_call_result.parts[0]
+                if first_item.function_response == None:
+                    raise Exception("Function response is None")
+
+                function_results = []
+                function_results.append(first_item)
+                if verbose:
+                    print(
+                        f"-> {function_call_result.parts[0].function_response.response}"
+                    )
+
         else:
             print("Response:")
             print(response.text)
