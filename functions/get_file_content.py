@@ -31,12 +31,12 @@ def get_file_content(working_directory, file_path):
     return content
 
 
-# TODO: ADD SCEHMA FOR GET_FILES_INFO, RUN_PYTHON_FILE, WRITE_FILE
 schema_get_file_content = types.FunctionDeclaration(
     name="get_file_content",
     description="Lists file content from a file in a specified directory relative to the working directory, providing the file info",
     parameters=types.Schema(
         type=types.Type.OBJECT,
+        required=["file_path"],
         properties={
             "working_directory": types.Schema(
                 type=types.Type.STRING,

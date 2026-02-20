@@ -12,7 +12,7 @@ def main():
         print("Missing Value: Input prompt is required")
         sys.exit(1)
 
-    user_prompt = sys.argv[1]
+    user_prompt = " ".join(sys.argv[1:])
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
@@ -25,7 +25,7 @@ def main():
     client = genai.Client(api_key=api_key)
 
     # Generate content with the client
-    model = "gemini-2.5-flash-lite"
+    model = "gemini-2.5-flash"
 
     try:
         response = client.models.generate_content(
