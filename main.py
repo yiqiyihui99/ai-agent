@@ -5,14 +5,19 @@ from google.genai import types
 import sys
 from prompts import system_prompt
 from available_functions import available_functions
+import argparse
 
 
 def main():
     if len(sys.argv) < 2 or sys.argv[1].strip() == "":
-        print("Missing Value: Input prompt is required")
+        print(
+            'Missing Value: Input prompt is required. \n Usage: python3 main.py "your prompt here" [--verbose]'
+        )
         sys.exit(1)
 
-    user_prompt = " ".join(sys.argv[1:])
+    user_prompt = " ".join(
+        sys.argv[1:]
+    )  # Potentially modify to handle nonquated prompt + flag
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
@@ -35,7 +40,7 @@ def main():
                 system_instruction=system_prompt, tools=[available_functions]
             ),
         )
-        if len(sys.argv) > 2 and sys.argv[2] == "--verbose":
+        if len(sys.argv) > 2 and (sys.argv[2] == "--verbose" or sys.argv[2] == "-v"):
             print(f"User prompt: {user_prompt}")
             print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
             print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
